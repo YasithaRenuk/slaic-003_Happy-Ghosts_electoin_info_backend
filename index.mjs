@@ -39,7 +39,15 @@ const mongoClientPromise = mongoClient.connect().catch((error) => {
 class ManifestoOutputParser {
   parseOutput(output) {
     try {
-      const parsedResponse = JSON.parse(output);
+      // Clean the output to remove unwanted characters
+      const cleanedOutput = output
+        .replace(/```json/g, '')  // Remove starting code block
+        .replace(/```/g, '')      // Remove ending code block
+        .replace(/\r?\n|\r/g, ' ') // Replace newlines with a space
+        .replace(/\\+/g, '\\')     // Handle escaped characters
+        .trim();                   // Trim whitespace
+      
+      const parsedResponse = JSON.parse(cleanedOutput);
       const { type, output: normalOutput, ComparisonArray } = parsedResponse;
 
       if (
@@ -52,12 +60,14 @@ class ManifestoOutputParser {
         return parsedResponse;
       }
     } catch (error) {
-      console.error("Failed to parse response:", error);
+      console.error("Failed to parse response:", error, output);
     }
 
     return { type: "fallback", output: "Failed to retrieve a valid response." };
   }
 }
+
+
 
 // Helper function to format conversation history
 function formatConversationHistory(history) {
